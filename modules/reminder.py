@@ -82,15 +82,18 @@ dates = {
 
 def load_db(filename):
     data = {}
-    with open(filename, 'rb') as file:
-        for line in file:
-            print(line)
-            time_, chat_id, message = str(line, 'UTF-8').split('\t')
-            message = message[:-1]
-            time_ = int(time_)
-            if time_ not in data:
-                data[time_] = []
-            data[time_].append((chat_id, message))
+    try:
+        with open(filename, 'rb') as file:
+            for line in file:
+                print(line)
+                time_, chat_id, message = str(line, 'UTF-8').split('\t')
+                message = message[:-1]
+                time_ = int(time_)
+                if time_ not in data:
+                    data[time_] = []
+                data[time_].append((chat_id, message))
+    except FileNotFoundError:
+        pass
     return data
 
 
