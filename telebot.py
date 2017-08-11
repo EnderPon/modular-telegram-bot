@@ -16,6 +16,7 @@ class Telebot:
         self.commands = {}
         self.reg_cb = {}
         self.callbacks = {}
+        self.break_ = False  # can be set to True by any module to prevent other modules from work with command.
         self.setup()
         self.offset = 0
         pass
@@ -120,6 +121,7 @@ class Telebot:
     def get_updates(self):
         for message in self.request("getUpdates", offset=self.offset+1)['result']:
             self.offset = message['update_id']
+            self.break_ = False
             if 'message' in message:
                 message = message['message']
                 mess_obj = Message(self, message)
@@ -127,7 +129,10 @@ class Telebot:
                 for command in self.commands:
                     if command.match(text):
                         for func in self.commands[command]:
-                            func(self, mess_obj)
+                            if not self.break_:
+                                func(self, mess_obj)
+                            else:
+                                break
             elif 'callback_query' in message:
                 callback = message['callback_query']
                 cb_obj = Callback(bot, callback)
