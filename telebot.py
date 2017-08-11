@@ -13,9 +13,11 @@ class Telebot:
         self.offset = 0
         self.home = os.getcwd()
         self.variables = {}
-        self.commands = {}
+        self.commands = {"high": {}, "mid": {}, "low": {}}
+        self.priorities = {}
         self.reg_cb = {}
         self.callbacks = {}
+        self.break_ = False  # can be set to True by any module to prevent other modules from work with command.
         self.setup()
         self.offset = 0
         pass
@@ -40,6 +42,7 @@ class Telebot:
         print("Loaded modules:", modules)
         self.bind_commands()
         self.bind_callbacks()
+        print(self.commands)
         return
 
     def register(self, variables):
@@ -48,16 +51,20 @@ class Telebot:
                 self.variables[name] = obj
             if hasattr(obj, 'callbacks'):
                 self.reg_cb[name] = obj
+            if hasattr(obj, "priority"):
+                self.priorities[name] = obj.priority
+            else:
+                self.priorities[name] = "mid"
         return
 
     def bind_commands(self):
-        def bind(self, regexp, func):
-            self.commands.setdefault(regexp, []).append(func)
+        def bind(self, regexp, func, name):
+            self.commands[self.priorities[name]].setdefault(regexp, []).append(func)
 
         for name, func in self.variables.items():
             for command in func.commands:
                 regexp = re.compile(command)
-                bind(self, regexp, func)
+                bind(self, regexp, func, name)
 
     def bind_callbacks(self):
         def bind(self, regexp, func):
@@ -120,14 +127,19 @@ class Telebot:
     def get_updates(self):
         for message in self.request("getUpdates", offset=self.offset+1)['result']:
             self.offset = message['update_id']
+            self.break_ = False
             if 'message' in message:
                 message = message['message']
                 mess_obj = Message(self, message)
                 text = message['text']
-                for command in self.commands:
-                    if command.match(text):
-                        for func in self.commands[command]:
-                            func(self, mess_obj)
+                for p in ("high", "mid", "low"):
+                    for command in self.commands[p]:
+                        if command.match(text):
+                            for func in self.commands[p][command]:
+                                if not self.break_:
+                                    func(self, mess_obj)
+                                else:
+                                    break
             elif 'callback_query' in message:
                 callback = message['callback_query']
                 cb_obj = Callback(bot, callback)
@@ -181,7 +193,8 @@ if __name__ == '__main__':
             print("Add your bot token to settings.json")
             exit()
     bot = Telebot(settings['key'])
-    bot.whoami()
+    if not bot.whoami():
+        raise Exception("Whoami don`t work. Something gone wrong.")
     while True:
         time.sleep(1)
         bot.get_updates()
