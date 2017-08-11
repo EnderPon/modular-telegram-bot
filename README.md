@@ -1,6 +1,7 @@
 # modular-telegram-bot
 Telegram bot supporting plugins (phenny-like)
 
+Modules with names starting with "_" will be ignored
+
 todo:
-1. Система приоритетов
-2. Модуль распределения прав
+1. Модуль распределения прав

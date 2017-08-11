@@ -1,12 +1,13 @@
 def help(bot, message):
     commands = []
-    for cmd, funcs in bot.commands.items():
-        if not hasattr(funcs[0], 'hidden'):
-            if hasattr(funcs[0], 'help'):
-                help = funcs[0].help
-            else:
-                help = ""
-            commands.append((cmd.pattern.strip('^$*.'), help))
+    for p in ("high", "mid", "low"):
+        for cmd, funcs in bot.commands[p].items():
+            if not hasattr(funcs[0], 'hidden'):
+                if hasattr(funcs[0], 'help'):
+                    help = funcs[0].help
+                else:
+                    help = ""
+                commands.append((cmd.pattern.strip('^$*.'), help))
 
     commands.sort()
     commands_str = ""
