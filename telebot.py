@@ -149,7 +149,8 @@ class Telebot:
             return False
 
     def parse_update(self, message):
-        self.offset = message['update_id']
+        if 'update_id' in message:
+            self.offset = message['update_id']
         self.break_ = False
         if 'message' in message:
             message = message['message']
