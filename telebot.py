@@ -184,7 +184,10 @@ class Telebot:
 
     def start_webhook_loop(self):
         # todo: добавить загрузку сертификатов
-        url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
+        if self.settings["port"] == 80:
+            url = self.settings["url"] + self.settings["route"]
+        else:
+            url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
         #print(url)
         self.request("setWebhook", url=url)
         print(self.request("getWebhookInfo"))
