@@ -14,7 +14,9 @@ class WebHook(object):
     @cherrypy.expose
     def index(self, *args, **kwargs):
         print("-----------")
+        print(args)
         print(kwargs)
+        print(self.bot.requests("getWebhookInfo"))
         print("-----------")
         if len(kwargs) == 0:
             return
