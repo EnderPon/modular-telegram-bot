@@ -3,6 +3,7 @@ import re
 import json
 import importlib
 import time
+import threading
 
 import requests
 import cherrypy
@@ -184,12 +185,18 @@ class Telebot:
 
     def start_webhook_loop(self):
         # todo: добавить загрузку сертификатов
-        url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
-        #print(url)
-        self.request("setWebhook", url=url)
-        print(self.request("getWebhookInfo"))
+
+        def start_webhook():
+            time.sleep(1)
+            url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
+            self.request("setWebhook", url=url)
+            print(self.request("getWebhookInfo"))
+
+        thread = threading.Thread(target=start_webhook, daemon=True)
+        thread.start()
         cherrypy.quickstart(self.wh, self.settings['listen_route'])
         pass
+
 
     def stop_webhook(self):
         self.request("deleteWebhook")
