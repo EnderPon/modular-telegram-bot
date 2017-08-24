@@ -5,11 +5,28 @@ import importlib
 import time
 
 import requests
+import cherrypy
+
+import wh
 
 
 class Telebot:
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self, settings_file=None):
+        if settings_file is None:
+            with open('settings.json', 'w') as file:
+                json.dump({"key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "mode": "requests",
+                           "cert_type": "selfsigned",
+                           "cert_path": "./bot.crt",
+                           "pub_key": "./bot.pem",
+                           "port": "8443",
+                           "url": "example.com/telegrambot",
+                           "listen_port": "31337",
+                           "listen_url": "0.0.0.0"}, file, indent=2)
+                print("Created example settings.json")
+                exit()
+        self.settings = json.load(open(settings_file, 'r'))
+        self.api_key = self.settings["key"]
         self.offset = 0
         self.home = os.getcwd()
         self.variables = {}
@@ -42,7 +59,10 @@ class Telebot:
         print("Loaded modules:", modules)
         self.bind_commands()
         self.bind_callbacks()
-        print(self.commands)
+        if self.settings["mode"] == "requests":
+            pass
+        elif self.settings["mode"] == "webhook":
+            self.setup_webhook()
         return
 
     def register(self, variables):
@@ -113,44 +133,52 @@ class Telebot:
             print("My id is " + str(answer["id"]))
             print("My name is " + str(answer["first_name"]))
             print("My username is @" + str(answer["username"]))
+            time.sleep(0.1)
             return True
         else:
             return False
 
-    def parse_message(self, message):
-        mess = Message(message)
-        for command in self.commands:
-            if command.match(mess['text']):
-                pass
-        return
+    def parse_update(self, message):
+        self.offset = message['update_id']
+        self.break_ = False
+        if 'message' in message:
+            message = message['message']
+            mess_obj = Message(self, message)
+            text = message['text']
+            for p in ("high", "mid", "low"):
+                for command in self.commands[p]:
+                    if command.match(text):
+                        for func in self.commands[p][command]:
+                            if not self.break_:
+                                func(self, mess_obj)
+                            else:
+                                break
+        elif 'callback_query' in message:
+            callback = message['callback_query']
+            cb_obj = Callback(self, callback)
+            data = callback['data']
+            for cb in self.callbacks:
+                if cb.match(data):
+                    for func in self.callbacks[cb]:
+                        func(self, cb_obj)
+        else:
+            pass
 
     def get_updates(self):
         for message in self.request("getUpdates", offset=self.offset+1)['result']:
-            self.offset = message['update_id']
-            self.break_ = False
-            if 'message' in message:
-                message = message['message']
-                mess_obj = Message(self, message)
-                text = message['text']
-                for p in ("high", "mid", "low"):
-                    for command in self.commands[p]:
-                        if command.match(text):
-                            for func in self.commands[p][command]:
-                                if not self.break_:
-                                    func(self, mess_obj)
-                                else:
-                                    break
-            elif 'callback_query' in message:
-                callback = message['callback_query']
-                cb_obj = Callback(bot, callback)
-                data = callback['data']
-                for cb in self.callbacks:
-                    if cb.match(data):
-                        for func in self.callbacks[cb]:
-                            func(self, cb_obj)
-            else:
-                continue
+            self.parse_update(message)
+        return
 
+    def setup_webhook(self):
+        self.wh = wh.WebHook(self)
+        pass
+
+    def start_webhook_loop(self):
+        cherrypy.quickstart(self.wh, self.settings['listen_route'])
+        pass
+
+    def stop_webhook(self):
+        pass
 
 
 class Message:
@@ -182,19 +210,3 @@ class Callback:
 class Dialog:
     def __init__(self):
         pass
-
-
-if __name__ == '__main__':
-    try:
-        settings = json.load(open('settings.json', 'r'))
-    except:
-        with open('settings.json', 'w') as file:
-            json.dump({"key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, file)
-            print("Add your bot token to settings.json")
-            exit()
-    bot = Telebot(settings['key'])
-    if not bot.whoami():
-        raise Exception("Whoami don`t work. Something gone wrong.")
-    while True:
-        time.sleep(1)
-        bot.get_updates()
