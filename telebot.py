@@ -184,10 +184,7 @@ class Telebot:
 
     def start_webhook_loop(self):
         # todo: добавить загрузку сертификатов
-        if self.settings["port"] == 443:
-            url = self.settings["url"] + self.settings["route"]
-        else:
-            url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
+        url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
         #print(url)
         self.request("setWebhook", url=url)
         print(self.request("getWebhookInfo"))
