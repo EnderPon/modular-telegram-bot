@@ -16,7 +16,7 @@ class WebHook(object):
         print("-----------")
         print(args)
         print(kwargs)
-        print(self.bot.requests("getWebhookInfo"))
+        print(self.bot.request("getWebhookInfo"))
         print("-----------")
         if len(kwargs) == 0:
             return
