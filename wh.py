@@ -16,16 +16,13 @@ class WebHook(object):
     @cherrypy.expose
     def index(self, *args, **kwargs):
         cl = cherrypy.request.headers['Content-Length']
-        rawbody = cherrypy.request.body.read(int(cl))
+        rawbody = cherrypy.request.body.read(int(cl)).decode()
         message = json.loads(rawbody)
-        print("-----------")
-        print(message)
-        print(self.bot.request("getWebhookInfo"))
-        print("-----------")
+        # print("-----------")
+        # print(message)
+        # print(self.bot.request("getWebhookInfo"))
+        # print("-----------")
         if len(message) == 0:
             return
         self.bot.parse_update(message)
         return
-
-if __name__ == "__main__":
-    cherrypy.quickstart(WebHook("dfhgasdfg"), '/test')
