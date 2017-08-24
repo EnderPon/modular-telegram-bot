@@ -13,7 +13,11 @@ class WebHook(object):
 
     @cherrypy.expose
     def index(self, *args, **kwargs):
+        print("-----------")
         print(kwargs)
+        print("-----------")
+        if len(kwargs) == 0:
+            return
         self.bot.parse_update(kwargs)
         return
 
