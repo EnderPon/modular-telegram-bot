@@ -1,3 +1,5 @@
+import json
+
 import cherrypy
 
 
@@ -13,14 +15,16 @@ class WebHook(object):
 
     @cherrypy.expose
     def index(self, *args, **kwargs):
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        message = json.loads(rawbody)
         print("-----------")
-        print(args)
-        print(kwargs)
+        print(message)
         print(self.bot.request("getWebhookInfo"))
         print("-----------")
-        if len(kwargs) == 0:
+        if len(message) == 0:
             return
-        self.bot.parse_update(kwargs)
+        self.bot.parse_update(message)
         return
 
 if __name__ == "__main__":
