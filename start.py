@@ -1,4 +1,11 @@
+import atexit
+
 from telebot import *
+
+
+@atexit.register
+def exiting():
+    bot.stop_webhook()
 
 if __name__ == '__main__':
     bot = Telebot("settings.json")

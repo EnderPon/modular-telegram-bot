@@ -13,19 +13,12 @@ import wh
 class Telebot:
     def __init__(self, settings_file=None):
         if settings_file is None:
-            with open('settings.json', 'w') as file:
-                json.dump({"key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                           "mode": "requests",
-                           "cert_type": "selfsigned",
-                           "cert_path": "./bot.crt",
-                           "pub_key": "./bot.pem",
-                           "port": "8443",
-                           "url": "example.com/telegrambot",
-                           "listen_port": "31337",
-                           "listen_url": "0.0.0.0"}, file, indent=2)
-                print("Created example settings.json")
-                exit()
-        self.settings = json.load(open(settings_file, 'r'))
+            self.gen_settings_file("settings.py")
+
+        try:
+            self.settings = json.load(open(settings_file, 'r'))
+        except:
+            self.gen_settings_file(settings_file)
         self.api_key = self.settings["key"]
         self.offset = 0
         self.home = os.getcwd()
@@ -38,6 +31,22 @@ class Telebot:
         self.setup()
         self.offset = 0
         pass
+
+    def gen_settings_file(self, settings_file):
+        with open(settings_file, 'w') as file:
+            json.dump({"key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                       "mode": "requests",
+                       "cert_type": "selfsigned",
+                       "cert_path": "./bot.crt",
+                       "pub_key": "./bot.pem",
+                       "port": "8443",
+                       "url": "example.com",
+                       "route": "/telegrambot",
+                       "listen_port": "31337",
+                       "listen_url": "0.0.0.0",
+                       "listen_route": "/telegrambot"}, file, indent=2)
+            print("Created example settings.json")
+            exit()
 
     def setup(self):
         filenames = []
@@ -174,10 +183,16 @@ class Telebot:
         pass
 
     def start_webhook_loop(self):
+        # todo: добавить загрузку сертификатов
+        url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
+        #print(url)
+        self.request("setWebhook", url=url)
+        print(self.request("getWebhookInfo"))
         cherrypy.quickstart(self.wh, self.settings['listen_route'])
         pass
 
     def stop_webhook(self):
+        self.request("deleteWebhook")
         pass
 
 
