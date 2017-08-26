@@ -138,7 +138,7 @@ def remind(bot, message):
         text = "Будет создано напоминание:\n" + \
                message.text[8:] + \
                "\nНа дату:\n" + \
-               time.strftime("%Y.%m.%d %R", now)
+               time.strftime("%Y-%m-%d %R", now)
         message.answer(text, keyboard=remind_kb)
 
 
@@ -152,7 +152,7 @@ def remind_cb(bot, callback):
     except IndexError:
         callback.message.update("Произошла ошибка, попробуйте снова.")
         return
-    date = time.strptime(date_str, "%Y.%m.%d %H:%M")
+    date = time.strptime(date_str, "%Y-%m-%d %H:%M")
     date = int(time.mktime(date))
     if data == "remind_done":
         if date not in bot.db:
