@@ -39,7 +39,9 @@ class Telebot:
                        "mode": "requests",
                        "cert_type": "selfsigned",
                        "cert_path": "./bot.crt",
-                       "pub_key": "./bot.pem",
+                       "cert_chain": "./chain.pem",
+                       "pub_key": "./pub.pem",
+                       "priv_key": "./priv.pem",
                        "port": "8443",
                        "url": "example.com",
                        "route": "/telegrambot",
@@ -189,19 +191,19 @@ class Telebot:
 
         def start_webhook():
             time.sleep(1)
+            if self.settings['route'][-1] != "/":
+                self.settings['route'] += "/"
+                # cherrypy listening on "example.com/route/" and returning 301
+                # if someone trying to access "example.com/route"
             url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
             self.request("setWebhook", url=url)
-            print(self.request("getWebhookInfo"))
 
-        thread = threading.Thread(target=start_webhook, daemon=True)
-        thread.start()
+        thread_start = threading.Thread(target=start_webhook, daemon=True)
+        thread_start.start()
         cherrypy.quickstart(self.wh, self.settings['listen_route'])
-        pass
-
 
     def stop_webhook(self):
-        self.request("deleteWebhook")
-        pass
+        print("stoping webhook:", self.request("deleteWebhook"))
 
 
 class Message:
