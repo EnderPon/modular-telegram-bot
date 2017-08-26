@@ -31,6 +31,7 @@ class Telebot:
         self.break_ = False  # can be set to True by any module to prevent other modules from work with command.
         self.setup()
         self.offset = 0
+        self.stop_webhook()  # stoping old webhook in case it was not stopped correctly
         pass
 
     def gen_settings_file(self, settings_file):
