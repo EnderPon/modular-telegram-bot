@@ -1,13 +1,7 @@
-import atexit
-
 from telebot import *
 
 
-@atexit.register
-def exiting():
-    bot.stop_webhook()
-
-if __name__ == '__main__':
+def main():
     bot = Telebot("settings.json")
     if not bot.whoami():
         raise Exception("Whoami don`t work. Something gone wrong.")
@@ -17,3 +11,7 @@ if __name__ == '__main__':
             bot.get_updates()
     if bot.settings["mode"] == "webhook":
         bot.start_webhook_loop()
+
+
+if __name__ == '__main__':
+    main()
