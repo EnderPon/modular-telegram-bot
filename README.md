@@ -45,6 +45,7 @@ port to listen
 route for flask to listen for telegram updates
 if not behind nginx proxy, must be same as in "url"
 (can be "" if bot behind nginx proxy)
+You should use your token as route to be shure than only telegram knows it.
 
 
 ## todo:
@@ -52,9 +53,7 @@ if not behind nginx proxy, must be same as in "url"
 1.1 sudo
 1.2 права по именам
 
-2. Выбор между вебхуком и обычным способом
-2.1 поддержка работы c самоподписаными сертификатами
-2.2 при окончании работы закрывать вебхук
+2. при окончании работы закрывать вебхук
 
 3. модуль RSS
 
