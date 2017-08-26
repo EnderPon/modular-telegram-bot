@@ -40,7 +40,6 @@ class Telebot:
                        "cert_type": "selfsigned",
                        "cert_path": "./bot.crt",
                        "cert_chain": "./chain.pem",
-                       "pub_key": "./pub.pem",
                        "priv_key": "./priv.pem",
                        "port": "8443",
                        "url": "example.com",
@@ -118,7 +117,7 @@ class Telebot:
 
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
-        req = requests.get(url, params=kwargs).json()
+        req = requests.post(url, data=kwargs).json()
         if req['ok'] is False:
             print("error in request?", req)
         return req
@@ -186,17 +185,32 @@ class Telebot:
         self.wh = wh.WebHook(self)
         pass
 
-    def start_webhook_loop(self):
-        # todo: добавить загрузку сертификатов
+    def wh_request(self):
+        url = "https://api.telegram.org/bot" + self.api_key + '/' + "setWebhook"
+        if self.settings['cert_type'] == "selfsigned":
+            files = {"certificate": open(self.settings["cert_path"], "rb")}
+        if self.settings['route'][-1] != "/":
+            self.settings['route'] += "/"
+            # cherrypy listening on "example.com/route/" and returning 301
+            # if someone trying to access "example.com/route"
+        data = {
+            "url": self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
+        }
+        return requests.post(url, data=data, files=files)
 
+    def start_webhook_loop(self):
         def start_webhook():
             time.sleep(1)
-            if self.settings['route'][-1] != "/":
-                self.settings['route'] += "/"
-                # cherrypy listening on "example.com/route/" and returning 301
-                # if someone trying to access "example.com/route"
-            url = self.settings["url"] + ":" + str(self.settings["port"]) + self.settings["route"]
-            self.request("setWebhook", url=url)
+            self.wh_request()
+            wh_status = self.request("getWebhookInfo")["result"]
+            print(wh_status)
+            print("Last error time: {}\nLast error text: {}\nHas custom cert: {}\nURL: {}\nPending: {}".format(
+                wh_status["last_error_date"],
+                wh_status["last_error_message"],
+                wh_status["has_custom_certificate"],
+                wh_status["url"],
+                wh_status["pending_update_count"]
+            ))
 
         thread_start = threading.Thread(target=start_webhook, daemon=True)
         thread_start.start()
