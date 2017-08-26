@@ -18,14 +18,23 @@ If mode is "webhook" chose type of certificate:
 * "cert_path": "./bot.crt"
 Path to your ssl cert (if "cert_type" not "none")
 
+* "cert_chain": "./bot_chain.crt"
+Path to your ssl cert chain (if "cert_type" not "none")
+
+* "priv_key": "./bot.pem"
+Path to your private key (if "cert_type" not "none")
+
 * "pub_key": "./bot.pem"
 Path to your public key (only for selfsigned cert)
 
-* "url": "example.com/telegrambot"
+* "url": "example.com"
 url for telegram servers where to send updates
 
 * "port": "8443"
 port for telegram servers where to send updates
+
+* "route": "/telegrambot",
+route for telegram servers where to send updates
 
 * "listen_on": "0.0.0.0"
 ip or url to listen
@@ -38,7 +47,7 @@ port to listen
 * "listen_route": "/telegrambot"
 route for flask to listen for telegram updates
 if not behind nginx proxy, must be same as in "url"
-(can be "/" if bot behind nginx proxy)
+(can be "" if bot behind nginx proxy)
 
 
 ## todo:
@@ -47,5 +56,7 @@ if not behind nginx proxy, must be same as in "url"
 1.2 права по именам
 
 2. Выбор между вебхуком и обычным способом
+2.1 поддержка работы c самоподписаными сертификатами
+2.2 при окончании работы закрывать вебхук
 
 3. модуль RSS
