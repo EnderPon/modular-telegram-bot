@@ -5,52 +5,52 @@ Modules with names starting with "_" will be ignored
 
 
 ## Settings file:
-* "key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+* "key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<br />
 Telegram bot token
 
-* "mode": "requests"
+* "mode": "requests"<br />
 "requests" or "webhook"
 
-* "cert_type": "selfsigned"
-If mode is "webhook" chose type of certificate:
+* "cert_type": "selfsigned"<br />
+If mode is "webhook" chose type of certificate:<br />
 "selfsigned", "signed" or "none" (use none if you planing use nginx proxy with ssl)
 
-* "cert_path": "./bot.crt"
+* "cert_path": "./bot.crt"<br />
 Path to your ssl cert (if "cert_type" not "none")
 
-* "cert_chain": "./bot_chain.crt"
+* "cert_chain": "./bot_chain.crt"<br />
 Path to your ssl cert chain (if "cert_type" is "signed")
 
-* "priv_key": "./bot.pem"
+* "priv_key": "./bot.pem"<br />
 Path to your private key (if "cert_type" not "signed")
 
-* "url": "example.com"
+* "url": "example.com"<br />
 url for telegram servers where to send updates
 
-* "port": "8443"
+* "port": "8443"<br />
 port for telegram servers where to send updates
 
-* "route": "/telegrambot",
+* "route": "/telegrambot"<br />
 route for telegram servers where to send updates
 
-* "listen_on": "0.0.0.0"
-ip or url to listen
+* "listen_on": "0.0.0.0"<br />
+ip or url to listen<br />
 (can be different from "url" if bot behind nginx proxy)
 
-* "listen_port": "31337"
-port to listen
+* "listen_port": "31337"<br />
+port to listen<br />
 (can be different from "port" if bot behind nginx proxy)
 
-* "listen_route": "/telegrambot"
-route for cherrypy to listen for telegram updates
-if not behind nginx proxy, must be same as in "url"
-(can be "" if bot behind nginx proxy)
+* "listen_route": "/telegrambot"<br />
+route for cherrypy to listen for telegram updates<br />
+if not behind nginx proxy, must be same as in "url"<br />
+(can be "" if bot behind nginx proxy)<br />
 You should use your token as route to be sure than only telegram knows it.
 
-* "smsru_apikey": "00000000-0000-0000-0000-000000000000"
+* "smsru_apikey": "00000000-0000-0000-0000-000000000000"<br />
 API key for sms module from https://sms.ru/
  
-* "smsru_number": "79001234567"
+* "smsru_number": "79001234567"<br />
 number to send free sms
 
 
