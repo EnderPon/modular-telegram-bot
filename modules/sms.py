@@ -4,8 +4,8 @@ import re
 import requests
 
 
-kb = json.dumps({"inline_keyboard":[[{"text": "Отмена",
-                                      "callback_data": 'sms_cancel'}]]})
+kb = json.dumps({"inline_keyboard": [[{"text": "Отмена",
+                                       "callback_data": 'sms_cancel'}]]})
 
 
 def free_left(api_id):
@@ -42,7 +42,6 @@ def send_sms(api_id, phone, message):
     if answer["status"] != "OK":
         return -1
     else:
-        print(answer)
         sms = answer["sms"][phone]
         if sms["status"] == "OK":
             return "Сообщение отправлено\n/sms_status_{})".format(sms["sms_id"].replace("-", "_gfh"))
@@ -61,6 +60,7 @@ def check_status(api_id, sms_id):
         print(answer)
         sms = answer["sms"][sms_id]
         return sms["status_text"]
+
 
 def sms(telebot, message):
     if "smsru_apikey" not in telebot.settings:
@@ -87,7 +87,6 @@ def sms(telebot, message):
 def sms_text(telebot, message):
     if hasattr(telebot, "sms_waiting") and telebot.sms_waiting is True:
         telebot.break_ = True
-        print(message.text)
         telebot.sms_waiting = False
         cost = check_cost(telebot.settings["smsru_apikey"],
                           telebot.settings["smsru_number"],
@@ -114,7 +113,6 @@ def sms_status(telebot, message):
         message.answer("Укажите ID сообщения")
         return
     id = "{}-{}".format(id[0], id[1])
-    print(id)
     message.answer("Статус сообщения {}:\n"
                    "{}".format(id, check_status(telebot.settings["smsru_apikey"], id)))
     return
@@ -122,7 +120,6 @@ def sms_status(telebot, message):
 
 def sms_cb(telebot, callback):
     data = callback.data
-    print("sms_cb")
     if data == "sms_cancel":
         text = "Отправка отменена."
         callback.message.update(text)
