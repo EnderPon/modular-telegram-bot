@@ -42,10 +42,16 @@ port to listen
 (can be different from "port" if bot behind nginx proxy)
 
 * "listen_route": "/telegrambot"
-route for flask to listen for telegram updates
+route for cherrypy to listen for telegram updates
 if not behind nginx proxy, must be same as in "url"
 (can be "" if bot behind nginx proxy)
-You should use your token as route to be shure than only telegram knows it.
+You should use your token as route to be sure than only telegram knows it.
+
+* "smsru_apikey": "00000000-0000-0000-0000-000000000000"
+API key for sms module from https://sms.ru/
+ 
+* "smsru_number": "79001234567"
+number to send free sms
 
 
 ## todo:
@@ -56,4 +62,3 @@ You should use your token as route to be shure than only telegram knows it.
 2. при окончании работы закрывать вебхук
 3. модуль RSS
 4. модуль reload
-5. демо-модуль, перехватывающий все сообщения для создания меню с вводом данных (на примере remind)
