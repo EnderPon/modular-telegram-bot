@@ -1,8 +1,11 @@
+import os.path
+
 from telebot import *
 
 
 def main():
-    bot = Telebot("settings.json")
+    path = os.path.dirname(__file__)
+    bot = Telebot(os.path.join(path, "settings.json"))
     if not bot.whoami():
         raise Exception("Whoami don`t work. Something gone wrong.")
     if bot.settings["mode"] == "requests":

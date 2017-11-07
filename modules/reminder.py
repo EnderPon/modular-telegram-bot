@@ -109,7 +109,7 @@ def save_db(filename, data):
 
 
 def setup(bot):
-    bot.db = load_db('reminders.db')
+    bot.db = load_db(bot.path_join('reminders.db'))
 
     def monitor(bot):
         time.sleep(5)

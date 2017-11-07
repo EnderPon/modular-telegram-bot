@@ -1,4 +1,5 @@
 import os
+import os.path
 import re
 import json
 import importlib
@@ -13,16 +14,15 @@ import wh
 
 class Telebot:
     def __init__(self, settings_file=None):
+        self.path = os.path.dirname(__file__)
         if settings_file is None:
-            self.gen_settings_file("settings.py")
-
+            self.gen_settings_file(self.path_join("settings.py"))
         try:
             self.settings = json.load(open(settings_file, 'r'))
         except:
             self.gen_settings_file(settings_file)
         self.api_key = self.settings["key"]
         self.offset = 0
-        self.home = os.getcwd()
         self.variables = {}
         self.commands = {"high": {}, "mid": {}, "low": {}}
         self.priorities = {}
@@ -33,6 +33,9 @@ class Telebot:
         self.offset = 0
         self.stop_webhook()  # stoping old webhook in case it was not stopped correctly
         pass
+
+    def path_join(self, path):
+        return os.path.join(self.path, path)
 
     def gen_settings_file(self, settings_file):
         with open(settings_file, 'w') as file:
@@ -53,9 +56,9 @@ class Telebot:
 
     def setup(self):
         filenames = []
-        for fn in os.listdir(os.path.join(self.home, 'modules')):
+        for fn in os.listdir(self.path_join('modules')):
             if fn.endswith('.py') and not fn.startswith('_'):
-                filenames.append(os.path.join(self.home, 'modules', fn))
+                filenames.append(os.path.join(self.path, 'modules', fn))
         modules = []
         for filename in filenames:
             name = os.path.basename(filename)[:-3]
