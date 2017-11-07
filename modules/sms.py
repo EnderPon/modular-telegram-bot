@@ -57,7 +57,6 @@ def check_status(api_id, sms_id):
     if answer["status"] != "OK":
         return -1
     else:
-        print(answer)
         sms = answer["sms"][sms_id]
         return sms["status_text"]
 
