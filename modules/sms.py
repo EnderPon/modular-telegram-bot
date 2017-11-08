@@ -44,7 +44,7 @@ def send_sms(api_id, phone, message):
     else:
         sms = answer["sms"][phone]
         if sms["status"] == "OK":
-            return "Сообщение отправлено\n/sms_status_{})".format(sms["sms_id"].replace("-", "_gfh"))
+            return "Сообщение отправлено\n/sms_status_{})".format(sms["sms_id"].replace("-", "_"))
         else:
             return sms["status_text"]
 
