@@ -7,6 +7,12 @@ import requests
 kb = json.dumps({"inline_keyboard": [[{"text": "Отмена",
                                        "callback_data": 'sms_cancel'}]]})
 
+send_kb = json.dumps({"inline_keyboard": [[{"text": "Отправить",
+                                            "callback_data": 'sms_confirm'},
+                                           {"text": "Отмена",
+                                            "callback_data": 'sms_cancel'}
+                                           ]]})
+
 
 def free_left(api_id):
     params = {"api_id": api_id, "json": 1}
@@ -44,7 +50,7 @@ def send_sms(api_id, phone, message):
     else:
         sms = answer["sms"][phone]
         if sms["status"] == "OK":
-            return "Сообщение отправлено\n/sms_status_{})".format(sms["sms_id"].replace("-", "_"))
+            return "Сообщение отправлено\n/sms_status_{}".format(sms["sms_id"].replace("-", "_"))
         else:
             return sms["status_text"]
 
@@ -79,14 +85,18 @@ def sms(telebot, message):
                        "Не длиннее 70 символов кириллицы или 160 латинницы.\n"
                        "Осталось {} СМС на сегодня".format(left),
                        keyboard=kb)
-        telebot.sms_waiting = True
+        if not hasattr(telebot, "sms_waiting"):
+            telebot.sms_waiting = []
+        telebot.sms_waiting.append(message.from_["id"])
+
     return
 
 
 def sms_text(telebot, message):
-    if hasattr(telebot, "sms_waiting") and telebot.sms_waiting is True:
+    from_ = message.from_["id"]
+    if hasattr(telebot, "sms_waiting") and from_ in telebot.sms_waiting:
         telebot.break_ = True
-        telebot.sms_waiting = False
+        telebot.sms_waiting.pop(telebot.sms_waiting.index(from_))
         cost = check_cost(telebot.settings["smsru_apikey"],
                           telebot.settings["smsru_number"],
                           message.text)
@@ -95,10 +105,12 @@ def sms_text(telebot, message):
         elif cost > 0.0:
             message.answer("Цена смс больше 0. Отправка не произойдёт.")
         elif cost == 0.0:
-            result = send_sms(telebot.settings["smsru_apikey"],
-                              telebot.settings["smsru_number"],
-                              message.text)
-            message.answer(result)
+            sender = message.from_["id"]
+            if "username" in message.from_:
+                sender = message.from_["username"]
+            message.answer("Будет отправленно сообщение:\n{}:\n{}".format(sender,
+                                                                          message.text),
+                           keyboard=send_kb)
         else:
             message.answer("Цена ниже 0, что-то не так.")
     return
@@ -122,7 +134,27 @@ def sms_cb(telebot, callback):
     if data == "sms_cancel":
         text = "Отправка отменена."
         callback.message.update(text)
-        telebot.sms_waiting = False
+        from_ = callback.message.from_["id"]
+        try:
+            telebot.sms_waiting.pop(telebot.sms_waiting.index(from_))
+        except ValueError:
+            pass
+        except AttributeError:
+            pass
+        return
+    if data == "sms_confirm":
+        # print(callback.message.text)
+        lines = callback.message.text.split("\n")
+        message_ = ""
+        for i in lines[1:]:
+            message_ += i + "\n"
+        message_ = message_[:-1]
+        print(message_)
+        callback.message.update(callback.message.text)
+        result = send_sms(telebot.settings["smsru_apikey"],
+                          telebot.settings["smsru_number"],
+                          message_)
+        callback.message.answer(result)
         return
 
 
@@ -134,4 +166,4 @@ sms_cb.callbacks = ["^sms.*$"]
 sms.help = 'Отправляет СМС владельцу бота (не больше 5 в сутки, не длиннее 70 (160) символов)'
 sms_status.help = 'Узнать успешность отправки смс'
 
-# Пример модуля, перехватывающего любой ввод в процессе ожидание текста СМС
+# Пример модуля, перехватывающего любой ввод в процессе ожидания текста СМС
