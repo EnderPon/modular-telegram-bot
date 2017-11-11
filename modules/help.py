@@ -7,7 +7,7 @@ def help(bot, message):
                     help = funcs[0].help
                 else:
                     help = ""
-                commands.append((cmd.pattern.strip('^$*.'), help))
+                commands.append((cmd.pattern.strip('^$*.[]_'), help))
 
     commands.sort()
     commands_str = ""
