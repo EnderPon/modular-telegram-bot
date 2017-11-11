@@ -12,6 +12,19 @@ import cherrypy
 import wh
 
 
+def log(*args):
+    if len(args) == 0:
+        return
+    else:
+        out = ""
+        for i in args:
+            out += "{} ".format(i)
+        out = out[:-1]
+    print("{}: {}".format(time.strftime("%Y-%m-%d %H:%M"),
+                          out))
+    return
+
+
 class Telebot:
     def __init__(self, settings_file=None):
         self.path = os.path.dirname(__file__)
@@ -51,7 +64,7 @@ class Telebot:
                        "listen_port": "31337",
                        "listen_url": "0.0.0.0",
                        "listen_route": "/telegrambot"}, file, indent=2)
-            print("Created example settings.json")
+            log("Created example settings.json")
             exit()
 
     def setup(self):
@@ -65,13 +78,13 @@ class Telebot:
             try:
                 module_ = importlib.import_module("modules."+name)
             except Exception as e:
-                print("Import error:", e)
+                log("Import error:", e)
             else:
                 if hasattr(module_, 'setup'):
                     module_.setup(self)
                 self.register(vars(module_))
                 modules.append(name)
-        print("Loaded modules:", modules)
+        log("Loaded modules:", modules)
         self.bind_commands()
         self.bind_callbacks()
         if self.settings["mode"] == "requests":
@@ -117,13 +130,13 @@ class Telebot:
             self.error(e)
 
     def error(self, e):
-        print(e)
+        log(e)
 
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
         req = requests.post(url, data=kwargs).json()
         if req['ok'] is False:
-            print("error in request?", req)
+            log("error in request?", req)
         return req
 
     def send(self, text, dialog=None, message=None, chat_id=None, keyboard=None, message_id=None):
@@ -145,9 +158,9 @@ class Telebot:
         answer = self.request("getMe")
         if answer["ok"] is True:
             answer = answer["result"]
-            print("My id is " + str(answer["id"]))
-            print("My name is " + str(answer["first_name"]))
-            print("My username is @" + str(answer["username"]))
+            log("My id is " + str(answer["id"]))
+            log("My name is " + str(answer["first_name"]))
+            log("My username is @" + str(answer["username"]))
             time.sleep(0.1)
             return True
         else:
@@ -207,8 +220,8 @@ class Telebot:
             time.sleep(1)
             self.wh_request()
             wh_status = self.request("getWebhookInfo")["result"]
-            print(wh_status)
-            print("Last error time: {}\nLast error text: {}\nHas custom cert: {}\nURL: {}\nPending: {}".format(
+            log(wh_status)
+            log("Last error time: {}\nLast error text: {}\nHas custom cert: {}\nURL: {}\nPending: {}".format(
                 wh_status["last_error_date"],
                 wh_status["last_error_message"],
                 wh_status["has_custom_certificate"],
@@ -221,7 +234,8 @@ class Telebot:
         cherrypy.quickstart(self.wh, self.settings['listen_route'])
 
     def stop_webhook(self):
-        print("stoping webhook:", self.request("deleteWebhook"))
+        log("stoping webhook:", self.request("deleteWebhook"))
+
 
 
 class Message:
