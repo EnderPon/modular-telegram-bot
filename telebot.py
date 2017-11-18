@@ -134,7 +134,11 @@ class Telebot:
 
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
-        req = requests.post(url, data=kwargs).json()
+        answer = requests.post(url, data=kwargs)
+        try:
+            req = answer.json()
+        except ValueError:
+            raise Exception("Error parsing JSON:\n{}".format(answer.text))
         if req['ok'] is False:
             log("error in request?", req)
         return req
