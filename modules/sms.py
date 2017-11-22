@@ -160,7 +160,7 @@ def sms_cb(telebot, callback):
         for i in lines[1:]:
             message_ += i + "\n"
         message_ = message_[:-1]
-        print(message_)
+        # print(message_)
         callback.message.update(callback.message.text)
         result = send_sms(telebot.settings["smsru_apikey"],
                           telebot.settings["smsru_number"],
