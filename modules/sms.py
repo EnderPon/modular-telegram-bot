@@ -169,7 +169,7 @@ def sms_cb(telebot, callback):
         return
 
 
-sms.commands = ["^/sms[^_]"]
+sms.commands = ["^/sms[^_]", "^/sms$"]
 sms_text.commands = [".*"]
 sms_status.commands = ["^/sms_status"]
 sms_text.priority = "high"
