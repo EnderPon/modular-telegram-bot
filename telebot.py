@@ -12,19 +12,6 @@ import cherrypy
 import wh
 
 
-def log(*args):
-    if len(args) == 0:
-        return
-    else:
-        out = ""
-        for i in args:
-            out += "{} ".format(i)
-        out = out[:-1]
-    print("{}: {}".format(time.strftime("%Y-%m-%d %H:%M"),
-                          out))
-    return
-
-
 class Telebot:
     def __init__(self, settings_file=None):
         self.path = os.path.dirname(__file__)
@@ -47,6 +34,27 @@ class Telebot:
         self.stop_webhook()  # stoping old webhook in case it was not stopped correctly
         pass
 
+    def log(self, *args, lvl=0):
+        # три уровня вывода: 0, 1, 2
+        # 0 - обычные сообщения
+        # 1 - подробные
+        # 2 - очень подробные
+        # todo: брать необходимый уровень логов из настроек
+        LOG_LVL = 0  # а пока он будет указан тут
+        if LOG_LVL < lvl:
+            # выводим только сообщения того же уровня или ниже
+            return
+        if len(args) == 0:
+            return
+        else:
+            out = ""
+            for i in args:
+                out += "{} ".format(i)
+            out = out[:-1]
+        print("{}: {}".format(time.strftime("%Y-%m-%d %H:%M"),
+                              out))
+        return
+
     def path_join(self, path):
         return os.path.join(self.path, path)
 
@@ -64,7 +72,7 @@ class Telebot:
                        "listen_port": "31337",
                        "listen_url": "0.0.0.0",
                        "listen_route": "/telegrambot"}, file, indent=2)
-            log("Created example settings.json")
+            self.log("Created example settings.json", lvl=0)
             exit()
 
     def setup(self):
@@ -78,13 +86,13 @@ class Telebot:
             try:
                 module_ = importlib.import_module("modules."+name)
             except Exception as e:
-                log("Import error:", e)
+                self.log("Import error:", e)
             else:
                 if hasattr(module_, 'setup'):
                     module_.setup(self)
                 self.register(vars(module_))
                 modules.append(name)
-        log("Loaded modules:", modules)
+        self.log("Loaded modules:", modules)
         self.bind_commands()
         self.bind_callbacks()
         if self.settings["mode"] == "requests":
@@ -130,17 +138,19 @@ class Telebot:
             self.error(e)
 
     def error(self, e):
-        log(e)
+        self.log(e)
 
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
+        self.log("sending request:\nURL: {}\nDATA: {}".format(url, kwargs), lvl=2)
         answer = requests.post(url, data=kwargs)
+        self.log("request answer: {}".format(answer.text), lvl=2)
         try:
             req = answer.json()
         except ValueError:
             raise Exception("Error parsing JSON:\n{}".format(answer.text))
         if req['ok'] is False:
-            log("error in request?", req)
+            self.log("error in request?", req)
         return req
 
     def send(self, text, dialog=None, message=None, chat_id=None, keyboard=None, message_id=None):
@@ -153,8 +163,10 @@ class Telebot:
         else:
             chat_id = chat_id
         if message_id is None:
+            self.log("Sending message to {}\nText: {}".format(chat_id, text), lvl=1)
             self.request('sendMessage', text=text, chat_id=chat_id, reply_markup=keyboard)
         else:
+            self.log("Updating message to {}\nText: {}".format(chat_id, text), lvl=1)
             self.request('editMessageText', text=text, chat_id=chat_id,
                          reply_markup=keyboard, message_id=message_id)
 
@@ -162,15 +174,18 @@ class Telebot:
         answer = self.request("getMe")
         if answer["ok"] is True:
             answer = answer["result"]
-            log("My id is " + str(answer["id"]))
-            log("My name is " + str(answer["first_name"]))
-            log("My username is @" + str(answer["username"]))
+            self.log("My id is " + str(answer["id"]))
+            self.log("My name is " + str(answer["first_name"]))
+            self.log("My username is @" + str(answer["username"]))
             time.sleep(0.1)
             return True
         else:
             return False
 
     def parse_update(self, message):
+        if "channel_post" in message or "edited_channel_post" in message:
+            self.log("Got group message, ignoring!", lvl=0)
+            return
         if 'update_id' in message:
             self.offset = message['update_id']
         self.break_ = False
@@ -199,6 +214,7 @@ class Telebot:
 
     def get_updates(self):
         for message in self.request("getUpdates", offset=self.offset+1)['result']:
+            self.log("Got message: {}".format(message), lvl=1)
             self.parse_update(message)
         return
 
@@ -224,8 +240,8 @@ class Telebot:
             time.sleep(1)
             self.wh_request()
             wh_status = self.request("getWebhookInfo")["result"]
-            log(wh_status)
-            log("Last error time: {}\nLast error text: {}\nHas custom cert: {}\nURL: {}\nPending: {}".format(
+            self.log(wh_status)
+            self.log("Last error time: {}\nLast error text: {}\nHas custom cert: {}\nURL: {}\nPending: {}".format(
                 wh_status["last_error_date"],
                 wh_status["last_error_message"],
                 wh_status["has_custom_certificate"],
@@ -238,14 +254,17 @@ class Telebot:
         cherrypy.quickstart(self.wh, self.settings['listen_route'])
 
     def stop_webhook(self):
-        log("stoping webhook:", self.request("deleteWebhook"))
+        self.log("stoping webhook:", self.request("deleteWebhook"))
 
 
 
 class Message:
     def __init__(self, bot, message):
         self.bot = bot
-        self.text = message['text']
+        try:
+            self.text = message['text']
+        except KeyError:
+            pass
         self.from_ = message['from']
         self.chat = message['chat']
         self.id = message["message_id"]
