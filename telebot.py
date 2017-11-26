@@ -39,6 +39,7 @@ class Telebot:
         # 0 - обычные сообщения
         # 1 - подробные
         # 2 - очень подробные
+        # -1 - игнорируем все сообщения
         # todo: брать необходимый уровень логов из настроек
         LOG_LVL = 0  # а пока он будет указан тут
         if LOG_LVL < lvl:
@@ -184,7 +185,8 @@ class Telebot:
 
     def parse_update(self, message):
         if "channel_post" in message or "edited_channel_post" in message:
-            self.log("Got group message, ignoring!", lvl=0)
+            self.request("leaveChat", chat_id=message["chat"]["id"])
+            self.log("Got channel message, leaving!", lvl=0)
             return
         if 'update_id' in message:
             self.offset = message['update_id']
@@ -192,7 +194,10 @@ class Telebot:
         if 'message' in message:
             message = message['message']
             mess_obj = Message(self, message)
-            text = message['text']
+            try:
+                text = message['text']
+            except KeyError:
+                return
             for p in ("high", "mid", "low"):
                 for command in self.commands[p]:
                     if command.match(text):
