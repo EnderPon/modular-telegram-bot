@@ -185,8 +185,8 @@ class Telebot:
 
     def parse_update(self, message):
         if "channel_post" in message or "edited_channel_post" in message:
-            self.request("leaveChat", chat_id=message["chat"]["id"])
-            self.log("Got channel message, leaving!", lvl=0)
+            # self.request("leaveChat", chat_id=message["chat"]["id"])
+            self.log("Got channel message, ingnoring!", lvl=1)
             return
         if 'update_id' in message:
             self.offset = message['update_id']
