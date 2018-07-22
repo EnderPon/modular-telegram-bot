@@ -10,28 +10,36 @@ import requests
 import cherrypy
 
 import wh
+import db
 
 
 class Telebot:
     def __init__(self, settings_file=None):
         self.path = os.path.dirname(__file__)
         if settings_file is None:
-            self.gen_settings_file(self.path_join("settings.py"))
+            self.gen_settings_file(self.path_join("settings.json"))
         try:
             self.settings = json.load(open(settings_file, 'r'))
         except:
             self.gen_settings_file(settings_file)
         self.api_key = self.settings["key"]
+        if "https_proxy" in self.settings and self.settings["https_proxy"] != "":
+            self.proxy = {"https": self.settings["https_proxy"]}
+        else:
+            self.proxy = {}
         self.offset = 0
+        self.db = db.DB()
         self.variables = {}
+        self.current_state = None
+        self.state = None
+        self.modules_settings = {}
         self.commands = {"high": {}, "mid": {}, "low": {}}
         self.priorities = {}
         self.reg_cb = {}
         self.callbacks = {}
-        self.break_ = False  # can be set to True by any module to prevent other modules from work with command.
         self.setup()
         self.offset = 0
-        self.stop_webhook()  # stoping old webhook in case it was not stopped correctly
+        self.stop_webhook()  # stopping old webhook in case it was not stopped correctly
         pass
 
     def log(self, *args, lvl=0):
@@ -61,18 +69,22 @@ class Telebot:
 
     def gen_settings_file(self, settings_file):
         with open(settings_file, 'w') as file:
-            json.dump({"key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                       "mode": "requests",
-                       "cert_type": "selfsigned",
-                       "cert_path": "./bot.crt",
-                       "cert_chain": "./chain.pem",
-                       "priv_key": "./priv.pem",
-                       "port": "8443",
-                       "url": "example.com",
-                       "route": "/telegrambot",
-                       "listen_port": "31337",
-                       "listen_url": "0.0.0.0",
-                       "listen_route": "/telegrambot"}, file, indent=2)
+            json.dump({
+                "key": "123456789:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "mode": "requests",
+                "cert_type": "selfsigned",
+                "cert_path": "./bot.crt",
+                "cert_chain": "./chain.pem",
+                "priv_key": "./priv.pem",
+                "port": "8443",
+                "url": "example.com",
+                "route": "/telegrambot",
+                "listen_port": "31337",
+                "listen_url": "0.0.0.0",
+                "listen_route": "/telegrambot",
+                "db_prefix": "telebot",
+                "admin_username": "username"
+            }, file, indent=2)
             self.log("Created example settings.json", lvl=0)
             exit()
 
@@ -112,6 +124,8 @@ class Telebot:
                 self.priorities[name] = obj.priority
             else:
                 self.priorities[name] = "mid"
+            if hasattr(obj, "settings"):
+                self.modules_settings[obj] = obj.settings
         return
 
     def bind_commands(self):
@@ -132,10 +146,12 @@ class Telebot:
                 regexp = re.compile(command)
                 bind(self, regexp, func)
 
-    def call(self, func, telebot, message):
+    def call(self, func, message):
         try:
-            func(telebot, message)
-        except Exception as e:
+            self.current_state = {"function": func.__name__, "chat": message.chat_id, "from": message.from_id}
+            func(self, message)
+            self.current_state = None
+        except KeyboardInterrupt as e:
             self.error(e)
 
     def error(self, e):
@@ -144,7 +160,10 @@ class Telebot:
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
         self.log("sending request:\nURL: {}\nDATA: {}".format(url, kwargs), lvl=2)
-        answer = requests.post(url, data=kwargs)
+        if len(self.proxy) > 0:
+            answer = requests.post(url, data=kwargs, proxies=self.proxy)
+        else:
+            answer = requests.post(url, data=kwargs)
         self.log("request answer: {}".format(answer.text), lvl=2)
         try:
             req = answer.json()
@@ -190,7 +209,6 @@ class Telebot:
             return
         if 'update_id' in message:
             self.offset = message['update_id']
-        self.break_ = False
         if 'message' in message:
             message = message['message']
             mess_obj = Message(self, message)
@@ -198,14 +216,15 @@ class Telebot:
                 text = message['text']
             except KeyError:
                 return
+            self.state = self.db.get_state(mess_obj.chat_id, mess_obj.from_id)
+            if self.state is not None:
+                self.call(self.variables[self.state["module"]], mess_obj)
+                return
             for p in ("high", "mid", "low"):
                 for command in self.commands[p]:
                     if command.match(text):
                         for func in self.commands[p][command]:
-                            if not self.break_:
-                                func(self, mess_obj)
-                            else:
-                                break
+                            self.call(func, mess_obj)
         elif 'callback_query' in message:
             callback = message['callback_query']
             cb_obj = Callback(self, callback)
@@ -213,7 +232,7 @@ class Telebot:
             for cb in self.callbacks:
                 if cb.match(data):
                     for func in self.callbacks[cb]:
-                        func(self, cb_obj)
+                        self.call(func, cb_obj)
         else:
             pass
 
@@ -261,6 +280,24 @@ class Telebot:
     def stop_webhook(self):
         self.log("stoping webhook:", self.request("deleteWebhook"))
 
+    def set_state(self, text):
+        state = self.current_state
+        self.db.set_state(state["chat"], state["from"], state["function"], text)
+        return
+
+    def clear_state(self):
+        state = self.current_state
+        self.db.clear_state(state["chat"], state["from"])
+        return
+
+    def set_setting(self, setting_name, setting_state):
+        state = self.current_state
+        self.db.set_setting(state["function"], setting_name, setting_state)
+        return
+
+    def get_setting(self, setting_name):
+        state = self.current_state
+        return self.db.get_setting(state["function"], setting_name)
 
 
 class Message:
@@ -274,6 +311,7 @@ class Message:
         self.chat = message['chat']
         self.id = message["message_id"]
         self.chat_id = self.chat['id']
+        self.from_id = self.from_['id']
         return
 
     def answer(self, text, keyboard=None):
@@ -289,6 +327,9 @@ class Callback:
         self.data = callback['data']
         self.message = Message(bot, callback['message'])
         self.from_ = callback['from']
+        self.chat = self.message.chat
+        self.chat_id = self.chat['id']
+        self.from_id = self.from_['id']
         return
 
 

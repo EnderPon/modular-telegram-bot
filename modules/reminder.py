@@ -109,20 +109,20 @@ def save_db(filename, data):
 
 
 def setup(bot):
-    bot.db = load_db(bot.path_join('reminders.db'))
+    bot.reminder_db = load_db(bot.path_join('reminders.db'))
 
     def monitor(bot):
         time.sleep(5)
         while True:
             now = int(time.time())
-            times = [int(key) for key in bot.db]
+            times = [int(key) for key in bot.reminder_db]
             old_times = [t for t in times if t <= now]
             if len(old_times) > 0:
                 for old_time in old_times:
-                    for chat_id, message in bot.db[old_time]:
+                    for chat_id, message in bot.reminder_db[old_time]:
                         bot.send(message, chat_id=chat_id)
-                    del bot.db[old_time]
-                save_db('reminders.db', bot.db)
+                    del bot.reminder_db[old_time]
+                save_db('reminders.db', reminder_db)
             time.sleep(5)
 
     thread = threading.Thread(target=monitor, args=(bot,), daemon=True)
@@ -155,10 +155,10 @@ def remind_cb(bot, callback):
     date = time.strptime(date_str, "%Y-%m-%d %H:%M")
     date = int(time.mktime(date))
     if data == "remind_done":
-        if date not in bot.db:
-            bot.db[date] = []
-        bot.db[date].append((chat_id, text_lines[1]))
-        save_db('reminders.db', bot.db)
+        if date not in bot.reminder_db:
+            bot.reminder_db[date] = []
+        bot.reminder_db[date].append((chat_id, text_lines[1]))
+        save_db('reminders.db', bot.reminder_db)
         text = "Cоздано напоминание:\n" + text_lines[1] + "\nНа дату:\n" + time.strftime("%Y.%m.%d %R", time.localtime(date))
         callback.message.update(text)
         return

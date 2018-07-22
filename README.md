@@ -47,12 +47,8 @@ if not behind nginx proxy, must be same as in "url"<br />
 (can be "" if bot behind nginx proxy)<br />
 You should use your token as route to be sure than only telegram knows it.
 
-* "smsru_apikey": "00000000-0000-0000-0000-000000000000"<br />
-API key for sms module from https://sms.ru/
- 
-* "smsru_number": "79001234567"<br />
-number to send free sms
-
+* "admin_username": "username"<br />
+username for user who can use /config module
 
 ## todo:
 1. Модуль распределения прав
@@ -62,3 +58,18 @@ number to send free sms
 2. при окончании работы закрывать вебхук
 3. модуль RSS
 4. модуль reload
+5. модуль для реализации чата "клиент-оператор"
+
+
+держать настройки в переменной, и не дёргать файл с ними каждый запрос
+добавить конфигам проверку на регулярки:
+{
+    module1:
+    [
+        setting1:
+        {
+            regexp: /123/,
+            state: "123"
+        }
+    ]
+}
