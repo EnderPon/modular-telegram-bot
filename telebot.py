@@ -32,7 +32,9 @@ class Telebot:
         self.variables = {}
         self.current_state = None
         self.state = None
-        self.modules_settings = {}
+        self.modules_settings_list = {}
+        self.user_states = {}
+        self.mod_settings = {}
         self.commands = {"high": {}, "mid": {}, "low": {}}
         self.priorities = {}
         self.reg_cb = {}
@@ -108,6 +110,7 @@ class Telebot:
         self.log("Loaded modules:", modules)
         self.bind_commands()
         self.bind_callbacks()
+        self.load_db()
         if self.settings["mode"] == "requests":
             pass
         elif self.settings["mode"] == "webhook":
@@ -125,7 +128,7 @@ class Telebot:
             else:
                 self.priorities[name] = "mid"
             if hasattr(obj, "settings"):
-                self.modules_settings[obj] = obj.settings
+                self.modules_settings_list[obj] = obj.settings
         return
 
     def bind_commands(self):
@@ -156,6 +159,11 @@ class Telebot:
 
     def error(self, e):
         self.log(e)
+
+    def load_db(self):
+        self.user_states = self.db.get_all_states()
+        self.mod_settings = self.db.get_all_settings()
+        return
 
     def request(self, method, **kwargs):
         url = "https://api.telegram.org/bot" + self.api_key + '/' + method
@@ -281,23 +289,45 @@ class Telebot:
         self.log("stoping webhook:", self.request("deleteWebhook"))
 
     def set_state(self, text):
+        """
+        Сохраняем состояние в базу, на случай выключения бота
+        :param text:
+        :return:
+        """
         state = self.current_state
-        self.db.set_state(state["chat"], state["from"], state["function"], text)
+        chat = state["chat"]
+        from_ = state["from"]
+        function_ = state["function"]
+        if chat not in self.user_states:
+            self.user_states[chat] = {}
+        self.user_states[chat][from_] = {"module": function_, "state": text}
+        self.db.set_state(chat, from_, function_, text)
         return
 
     def clear_state(self):
         state = self.current_state
+        try:
+            del self.user_states[state["chat"]][state["from"]]
+        except KeyError:
+            pass
         self.db.clear_state(state["chat"], state["from"])
         return
 
     def set_setting(self, setting_name, setting_state):
         state = self.current_state
-        self.db.set_setting(state["function"], setting_name, setting_state)
+        module = state["function"]
+        if module not in self.mod_settings:
+            self.mod_settings[module] = {}
+        self.mod_settings[module][setting_name] = setting_state
+        self.db.set_setting(module, setting_name, setting_state)
         return
 
     def get_setting(self, setting_name):
         state = self.current_state
-        return self.db.get_setting(state["function"], setting_name)
+        try:
+            return self.mod_settings[state["function"]][setting_name]
+        except KeyError:
+            return self.db.get_setting(state["function"], setting_name)
 
 
 class Message:

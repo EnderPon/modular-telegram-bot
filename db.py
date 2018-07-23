@@ -33,12 +33,20 @@ class DB:
             json.dump({"modules": {}, "states": {}}, open(self.db_file, "w"), indent=2)
         return
 
+    def get_all_settings(self):
+        all_settings = json.load(open(self.db_file, "r"))
+        return all_settings["modules"]
+
     def get_module_settings(self, module):
         all_settings = json.load(open(self.db_file, "r"))
         return all_settings["modules"][module]
 
     def get_setting(self, module, name):
         return self.get_module_settings(module)[name]
+
+    def get_all_states(self):
+        all_settings = json.load(open(self.db_file, "r"))
+        return all_settings["states"]
 
     def set_setting(self, module, name, state):
         all_settings = json.load(open(self.db_file, "r"))
