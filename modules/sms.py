@@ -157,8 +157,7 @@ def sms_cb(telebot, callback):
 
 
 sms.commands = ["^/sms[^_]", "^/sms$"]
-sms.settings = ["apikey", "number"]
-# sms.settings = {"apikey": ".*", "number": "\d+"}
+sms.settings = {"apikey": "", "number": "\d{10}"}
 sms_status.commands = ["^/sms_status"]
 sms_cb.callbacks = ["^sms.*$"]
 sms.help = 'Отправляет СМС владельцу бота (не больше 5 в сутки, не длиннее 70 (160) символов)'
