@@ -131,7 +131,7 @@ def sms_status(telebot, message):
         return
     message_id = "{}-{}".format(message_id[0], message_id[1])
     message.answer("Статус сообщения {}:\n"
-                   "{}".format(message_id, check_status(telebot.db.get_setting("sms", "apikey"), message_id)))
+                   "{}".format(message_id, check_status(telebot.get_setting("apikey", module="sms"), message_id)))
     return
 
 
@@ -149,8 +149,8 @@ def sms_cb(telebot, callback):
             message_ += i + "\n"
         message_ = message_[:-1]
         callback.message.update(callback.message.text)
-        result = send_sms(telebot.db.get_setting("sms", "apikey"),
-                          telebot.db.get_setting("sms", "number"),
+        result = send_sms(telebot.get_setting("apikey", module="sms"),
+                          telebot.get_setting("number", module="sms"),
                           message_)
         callback.message.answer(result)
         return

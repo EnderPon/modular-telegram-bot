@@ -288,20 +288,19 @@ class Telebot:
     def stop_webhook(self):
         self.log("stoping webhook:", self.request("deleteWebhook"))
 
-    def set_state(self, text):
+    def set_state(self, text, module=None):
         """
         Сохраняем состояние в базу, на случай выключения бота
-        :param text:
-        :return:
         """
         state = self.current_state
         chat = state["chat"]
         from_ = state["from"]
-        function_ = state["function"]
+        if module is None:
+            module = state["function"]
         if chat not in self.user_states:
             self.user_states[chat] = {}
-        self.user_states[chat][from_] = {"module": function_, "state": text}
-        self.db.set_state(chat, from_, function_, text)
+        self.user_states[chat][from_] = {"module": module, "state": text}
+        self.db.set_state(chat, from_, module, text)
         return
 
     def clear_state(self):
@@ -313,21 +312,24 @@ class Telebot:
         self.db.clear_state(state["chat"], state["from"])
         return
 
-    def set_setting(self, setting_name, setting_state):
+    def set_setting(self, setting_name, setting_state, module=None):
         state = self.current_state
-        module = state["function"]
+        if module is None:
+            module = state["function"]
         if module not in self.mod_settings:
             self.mod_settings[module] = {}
         self.mod_settings[module][setting_name] = setting_state
         self.db.set_setting(module, setting_name, setting_state)
         return
 
-    def get_setting(self, setting_name):
+    def get_setting(self, setting_name, module=None):
         state = self.current_state
+        if module is None:
+            module = state["function"]
         try:
-            return self.mod_settings[state["function"]][setting_name]
+            return self.mod_settings[module][setting_name]
         except KeyError:
-            return self.db.get_setting(state["function"], setting_name)
+            return self.db.get_setting(module, setting_name)
 
 
 class Message:

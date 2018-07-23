@@ -25,7 +25,7 @@ def config(telebot, message):
 
             state = json.loads(telebot.state["state"])
             if re.match(state["regexp"], message.text):
-                telebot.set_setting(state["setting"], message.text)
+                telebot.set_setting(state["setting"], message.text, module=state["module"])
                 telebot.clear_state()
                 message.answer("Настройка сохранена")
             else:
@@ -51,7 +51,6 @@ def config(telebot, message):
             function_name = data[2]
             setting_name = data[3]
             function_ = telebot.variables[function_name]
-            print(telebot.modules_settings_list)
             regexp = telebot.modules_settings_list[function_][setting_name]
             text = "Отправьте новое состояние {} для модуля {}.\n" \
                    "Оно должно соответствовать регулярному выражению '{}'\n" \
