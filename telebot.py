@@ -85,7 +85,8 @@ class Telebot:
                 "listen_url": "0.0.0.0",
                 "listen_route": "/telegrambot",
                 "db_prefix": "telebot",
-                "admin_username": "username"
+                "admin_username": "username",
+                "https_proxy": ""
             }, file, indent=2)
             self.log("Created example settings.json", lvl=0)
             exit()

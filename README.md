@@ -50,6 +50,9 @@ You should use your token as route to be sure than only telegram knows it.
 * "admin_username": "username"<br />
 username for user who can use /config module
 
+* "https_proxy": "socks5h://user:passwords@example.com:1080"<br />
+proxy for requests mode (if needed)
+
 ## todo:
 1. Модуль распределения прав
     1. супер-пользователь с полными правами
