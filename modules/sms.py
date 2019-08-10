@@ -90,12 +90,14 @@ def send_conf(telebot, message, text):
 
 
 def sms(telebot, message):
-    # if "smsru_apikey" not in telebot.settings:
-    #     message.answer("АПИ ключ не указан /config")
-    #     return
-    # if "smsru_number" not in telebot.settings:
-    #     message.answer("Номер телефона не указан /config")
-    #     return
+    apikey = telebot.get_setting("apikey")
+    phone = telebot.get_setting("number")
+    if apikey is None:
+        message.answer("АПИ ключ не указан /config")
+        return
+    if phone is None:
+        message.answer("Номер телефона не указан /config")
+        return
 
     if telebot.state is not None:
         if telebot.state["state"] == "waiting for sms":
