@@ -50,9 +50,7 @@ class Telebot:
         # 1 - подробные
         # 2 - очень подробные
         # -1 - игнорируем все сообщения
-        # todo: брать необходимый уровень логов из настроек
-        LOG_LVL = 0  # а пока он будет указан тут
-        if LOG_LVL < lvl:
+        if self.settings["log_level"] < lvl:
             # выводим только сообщения того же уровня или ниже
             return
         if len(args) == 0:
@@ -86,6 +84,7 @@ class Telebot:
                 "listen_route": "/telegrambot",
                 "db_prefix": "telebot",
                 "admin_username": "username",
+                "log_level": 0,
                 "https_proxy": ""
             }, file, indent=2)
             self.log("Created example settings.json", lvl=0)
