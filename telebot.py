@@ -330,7 +330,12 @@ class Telebot:
         try:
             return self.mod_settings[module][setting_name]
         except KeyError:
+            pass
+        try:
             return self.db.get_setting(module, setting_name)
+        except KeyError:
+            pass
+        return None
 
 
 class Message:
