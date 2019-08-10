@@ -41,6 +41,7 @@ class Telebot:
         self.callbacks = {}
         self.setup()
         self.offset = 0
+        self.wh = None
         self.stop_webhook()  # stopping old webhook in case it was not stopped correctly
         pass
 
@@ -258,6 +259,8 @@ class Telebot:
         url = "https://api.telegram.org/bot" + self.api_key + '/' + "setWebhook"
         if self.settings['cert_type'] == "selfsigned":
             files = {"certificate": open(self.settings["cert_path"], "rb")}
+        else:
+            files = None
         if self.settings['route'][-1] != "/":
             self.settings['route'] += "/"
             # cherrypy listening on "example.com/route/" and returning 301
