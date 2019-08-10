@@ -20,7 +20,7 @@ class Telebot:
             self.gen_settings_file(self.path_join("settings.json"))
         try:
             self.settings = json.load(open(settings_file, 'r'))
-        except:
+        except FileNotFoundError:
             self.gen_settings_file(settings_file)
         self.api_key = self.settings["key"]
         if "https_proxy" in self.settings and self.settings["https_proxy"] != "":
