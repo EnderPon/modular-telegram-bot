@@ -42,7 +42,11 @@ class DB:
         return all_settings["modules"][module]
 
     def get_setting(self, module, name):
-        return self.get_module_settings(module)[name]
+        try:
+            setting = self.get_module_settings(module)[name]
+        except KeyError:
+            setting = None
+        return setting
 
     def get_all_states(self):
         all_settings = json.load(open(self.db_file, "r"))
